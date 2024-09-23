@@ -20,23 +20,22 @@ This is a **Node.js** practice project built with **Express.js**, **TypeScript**
 - **JWT**: Token-based authentication
 
 ## Directory Structure
-
-\`\`\`plaintext
+```
 src/
-├── index.ts          # Main entry point
-├── middlewares/      # Authentication and authorization middleware
-│   ├── user.ts       # User authentication middleware
-│   └── admin.ts      # Admin authentication middleware
-├── routes/           # API route handlers
-│   ├── user/         
-│   │   └── user.ts   # Routes for user management
-│   └── course/       
-│       └── course.ts # Routes for course management
-├── db/               # Database models and connection
-│   └── db.ts         # Mongoose configuration
-└── schema/           # Schema definitions for MongoDB
+├── index.ts              # Main entry point
+├── middlewares/          # Authentication and authorization middleware
+│   ├── user.ts           # User authentication middleware
+│   └── admin.ts          # Admin authentication middleware
+├── routes/               # API route handlers
+│   ├── user/             
+│   │   └── user.ts       # Routes for user management
+│   └── course/           
+│       └── course.ts     # Routes for course management
+├── db/                   # Database models and connection
+│   └── db.ts             # Mongoose configuration
+└── schema/               # Schema definitions for MongoDB
     └── schema.ts
-\`\`\`
+```
 
 ## Endpoints
 
