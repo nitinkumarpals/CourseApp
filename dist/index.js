@@ -19,7 +19,8 @@ var userSchema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   firstName: String,
-  lastName: String
+  lastName: String,
+  courses: [ObjectId]
 });
 var adminSchema = new Schema({
   email: { type: String, required: true, unique: true },
@@ -66,17 +67,44 @@ var courseSchema2 = z.object({
 });
 
 // src/routes/user/user.ts
+import jwt2 from "jsonwebtoken";
+
+// src/middlewares/user.ts
 import jwt from "jsonwebtoken";
+var userMiddleware = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      throw new Error("Authorization token is missing or invalid");
+    }
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || ""
+    );
+    if (decoded) {
+      req.userId = decoded.id;
+      next();
+    } else {
+      throw new Error("Invalid token payload or jwt secret");
+    }
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: error instanceof Error ? error.message : "Unauthorized"
+    });
+  }
+};
+
+// src/routes/user/user.ts
 var userRouter = Router();
 userRouter.post("/signup", async function(req, res) {
   try {
     const body = req.body;
     const parsedBody = signupSchema.safeParse(body);
     if (!parsedBody.success) {
-      const errorMessages = parsedBody.error.errors.map((err) => err.message).join(", ");
       return res.status(400).json({
         success: false,
-        message: errorMessages
+        message: "Validation error: " + parsedBody.error.errors.map((err) => `${err.path[0]} ${err.message}`).join(", ")
       });
     }
     const { email, password, firstName, lastName } = parsedBody.data;
@@ -84,20 +112,20 @@ userRouter.post("/signup", async function(req, res) {
       email,
       password,
       firstName,
-      lastName
+      lastName,
+      courses: []
     });
-    const token = jwt.sign(
+    const token = jwt2.sign(
       {
         email: user.email,
         id: user._id
       },
-      process.env.JWT_SECRET_ADMIN || ""
+      process.env.JWT_SECRET || ""
     );
     res.status(200).json({
       user,
-      // course,
       token,
-      message: "user and course created successfully"
+      message: "user created successfully"
     });
   } catch (error) {
     if (error instanceof Error && error.code === 11e3) {
@@ -120,10 +148,9 @@ userRouter.post("/signin", async function(req, res) {
     const body = req.body;
     const parsedBody = signinSchema.safeParse(body);
     if (!parsedBody.success) {
-      const errorMessages = parsedBody.error.errors.map((err) => err.message).join(", ");
       return res.status(400).json({
         success: false,
-        message: errorMessages
+        message: "Validation error: " + parsedBody.error.errors.map((err) => `${err.path[0]} ${err.message}`).join(", ")
       });
     }
     const { email, password } = parsedBody.data;
@@ -140,12 +167,12 @@ userRouter.post("/signin", async function(req, res) {
         message: "Invalid email or password"
       });
     }
-    const token = jwt.sign(
+    const token = jwt2.sign(
       {
         email: user.email,
         id: user._id
       },
-      process.env.JWT_SECRET_ADMIN || ""
+      process.env.JWT_SECRET || ""
     );
     return res.status(200).json({
       success: true,
@@ -161,25 +188,34 @@ userRouter.post("/signin", async function(req, res) {
     });
   }
 });
-userRouter.get("/purchases", function(req, res) {
-  res.json({
-    message: "signup endpoint"
-  });
+userRouter.get("/purchases", userMiddleware, async function(req, res) {
+  try {
+    const userId = req.userId;
+    const purchases = await purchaseModel.find({ userId });
+    const courseIds = purchases.map((purchase) => purchase.courseId);
+    const courses = await courseModel.find({ _id: { $in: courseIds } });
+    res.status(200).json({ courses });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error getting purchases",
+      error: error.message
+    });
+  }
 });
 
 // src/routes/user/admin.ts
 import { Router as Router2 } from "express";
-import jwt3 from "jsonwebtoken";
+import jwt4 from "jsonwebtoken";
 
 // src/middlewares/admin.ts
-import jwt2 from "jsonwebtoken";
+import jwt3 from "jsonwebtoken";
 var adminMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
       throw new Error("Authorization token is missing or invalid");
     }
-    const decoded = jwt2.verify(
+    const decoded = jwt3.verify(
       token,
       process.env.JWT_SECRET_ADMIN || ""
     );
@@ -218,7 +254,7 @@ adminRouter.post("/signup", async function(req, res) {
       lastName,
       courses: []
     });
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         email: admin.email,
         id: admin._id
@@ -272,7 +308,7 @@ adminRouter.post("/signin", async function(req, res) {
         message: "Invalid email or password"
       });
     }
-    const token = jwt3.sign(
+    const token = jwt4.sign(
       {
         email: admin.email,
         id: admin._id
@@ -379,14 +415,34 @@ adminRouter.get(
 // src/routes/course/course.ts
 import express from "express";
 var courseRouter = express.Router();
-courseRouter.post("/purchase", function(req, res) {
-  res.json({
-    message: "signup endpoint"
-  });
+courseRouter.post("/purchase", userMiddleware, async function(req, res) {
+  try {
+    const userId = req.userId;
+    const courseId = req.body.courseId;
+    await purchaseModel.create({
+      userId,
+      courseId
+    });
+    await userModel.findByIdAndUpdate(userId, {
+      $push: { courses: courseId }
+    });
+    res.json({
+      message: "Course purchased successfully"
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Error purchasing course",
+      error: error.message
+    });
+  }
 });
-courseRouter.get("/", function(req, res) {
-  res.json({
-    message: "course endpoint"
+courseRouter.get("/", async function(req, res) {
+  const courses = await courseModel.find();
+  res.status(200).json({
+    success: true,
+    message: "Courses fetched successfully",
+    courses
   });
 });
 

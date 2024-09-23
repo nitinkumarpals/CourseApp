@@ -15,7 +15,8 @@ var userSchema = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   firstName: String,
-  lastName: String
+  lastName: String,
+  courses: [ObjectId]
 });
 var adminSchema = new Schema({
   email: { type: String, required: true, unique: true },

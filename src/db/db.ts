@@ -12,6 +12,7 @@ const userSchema = new Schema({
   password: { type: String, required: true },
   firstName: String,
   lastName: String,
+  courses: [ObjectId],
 });
 
 const adminSchema = new Schema({

@@ -1,10 +1,8 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-interface RequestWithUserId extends Request {
-  userId: string;
-}
-const middleware = async (
-  req: RequestWithUserId,
+
+export const userMiddleware = async (
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
