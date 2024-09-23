@@ -39,17 +39,20 @@ src/
 
 ## Endpoints
 
-- **User Management**:  
-  - \`POST /user\` – Create a user  
-  - \`GET /user\` – Get user data  
-  - \`PUT /user/:id\` – Update a user  
-  - \`DELETE /user/:id\` – Delete a user
+- **User Management**:
+  
+  - ```POST /user``` – Create a user  
+  - ```GET /user``` – Get user data  
+  - ```PUT /user/:id``` – Update a user  
+  - ```DELETE /user/:id``` – Delete a user
 
-- **Course Management**:  
-  - \`POST /course\` – Add a course  
-  - \`GET /course\` – View all courses  
-  - \`PUT /course/:id\` – Update a course  
-  - \`DELETE /course/:id\` – Delete a course
+- **Course Management**:
+  
+  - ```POST /course``` – Add a course  
+  - ```GET /course``` – View all courses  
+  - ```PUT /course/:id``` – Update a course  
+  - ```DELETE /course/:id``` – Delete a course
+  
 
 - **Admin Actions**:  
   - Admin-specific actions related to user and course management
@@ -58,24 +61,24 @@ src/
 
 1. Clone the repository:
 
-   \`\`\`bash
+   ``` bash
    git clone https://github.com/your-username/practice-course-management.git
    cd practice-course-management
-   \`\`\`
+   ```
 
 2. Install dependencies:
 
-   \`\`\`bash
+  ```bash
    npm install
-   \`\`\`
+  ```
 
 3. Set up environment variables (e.g., JWT secret, MongoDB connection string).
 
 4. Start the development server:
 
-   \`\`\`bash
-   npm start
-   \`\`\`
+   ```bash
+   npm run dev
+   ```
 
 5. Use tools like **Postman** or **cURL** to interact with the API.
 
